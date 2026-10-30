@@ -1,0 +1,24 @@
+{
+  "name": "dmarc-warmup",
+  "private": true,
+  "type": "module",
+  "description": "Cron Worker that moves domains from DMARC p=none to quarantine to reject, ten days per step (RFC 9989 records).",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test",
+    "preview": "node scripts/preview.js",
+    "schedule": "node scripts/schedule.js",
+    "deploy": "node scripts/deploy.js",
+    "secret:token": "node scripts/secret.js CF_DNS_TOKEN",
+    "secret:notify": "node scripts/secret.js NOTIFY_TO",
+    "logs": "node scripts/worker.js logs",
+    "delete": "node scripts/worker.js delete",
+    "logout": "node scripts/worker.js logout"
+  },
+  "devDependencies": {
+    "wrangler": "4.155.0"
+  },
+  "engines": {
+    "node": ">=22.9"
+  }
+}

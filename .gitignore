@@ -1,0 +1,23 @@
+node_modules/
+.wrangler/
+# No env file belongs here (npm run deploy refuses to run next to one); if one appears, keep it out.
+.env
+.env.*
+.dev.vars*
+# The live plan, schedule and sender, and any copy of them, backups and editor swap files included;
+# wrangler.example.jsonc is the template. Wrangler also reads wrangler.json and wrangler.toml.
+wrangler*.jsonc
+wrangler.jsonc.*
+!wrangler.example.jsonc
+wrangler.json
+wrangler.toml
+*.bak
+*~
+*.swp
+*.swo
+# DMARC reports, mails and logs looked at during the warmup: they name senders and IP addresses.
+*.xml
+*.gz
+*.zip
+*.eml
+*.log

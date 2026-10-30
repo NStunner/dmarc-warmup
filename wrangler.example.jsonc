@@ -1,0 +1,52 @@
+// dmarc-warmup: cron Worker that only runs on the days a phase starts. No routes, no public URL.
+// npm run schedule -- YYYY-MM-DD copies this file to wrangler.jsonc (git ignores it); put your
+// own plan in that copy. Secrets (set with wrangler, never in this file):
+//   CF_DNS_TOKEN  Cloudflare API token: Zone · Zone · Read + Zone · DNS · Edit on the planned zones
+//                 (Specific zone resources), no IP filter (Workers reach the API from 2a06:98c0:3600::103)
+//   NOTIFY_TO     verified Email Routing destination that gets change and error mails
+// npm run deploy accepts only the settings below (plus "$schema"); anything else would ship unshown.
+{
+  "name": "dmarc-warmup",
+  // Optional: "account_id": "<32 hex characters>" (dashboard → Workers & Pages → Account ID), so
+  // wrangler doesn't have to look the account up.
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "triggers": {
+    // The days the phases start, four tries an hour apart (06:17-09:17 UTC): the first that
+    // succeeds writes the record, the rest find nothing to change. npm run schedule fills them in
+    // from PLAN.start. The same dates come round every year; by then every run is a no-op.
+    "crons": []
+  },
+  // Add "destination_address": "<the NOTIFY_TO address>" to limit the binding to that one recipient.
+  "send_email": [{ "name": "NOTIFY" }],
+  "vars": {
+    // An address on a zone with Email Routing turned on, which send_email needs.
+    "NOTIFY_FROM": "dmarc-warmup@example.com",
+    // Language of the mails: "en" or "tr".
+    "NOTIFY_LANG": "en",
+    // Every domain moves none → quarantine → reject, counted in whole UTC days from start.
+    "PLAN": {
+      // The UTC day p=none starts. npm run schedule -- YYYY-MM-DD sets it together with the crons.
+      "start": "YYYY-MM-DD",
+      "phases": [
+        { "policy": "none", "days": 10 },
+        { "policy": "quarantine", "days": 10 },
+        { "policy": "reject" }
+      ],
+      // Non-existent subdomains can't send legitimate mail (the np tag of RFC 9989).
+      "np": "reject",
+      "domains": ["example.com", "example.org"],
+      // Report addresses: a mailbox on each domain ({domain} stands for it) and a report analyzer's.
+      // A Cloudflare DMARC Management address already in a record is kept as well. Leave ruf empty
+      // if you don't want failure reports.
+      "rua": ["mailto:dmarc@{domain}", "mailto:rua@dmarc-analyzer.example.net"],
+      "ruf": ["mailto:dmarc@{domain}", "mailto:ruf@dmarc-analyzer.example.net"],
+      // Cap a domain's p while its reports are looked into, e.g. { "example.org": "quarantine" }.
+      // A hold also lowers a p that is already stricter; other stricter tags are kept.
+      "hold": {}
+    }
+  },
+  "observability": { "enabled": true }
+}
